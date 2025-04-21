@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <Spinner
+        android:id="@+id/commands"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Spinner
+        android:id="@+id/pcs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:id="@+id/sendButton"
+        android:text="Send Command"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:id="@+id/wolButton"
+        android:text="Wake Up PC"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:id="@+id/checkPcsButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="CheckPcs" />
+
+    <TextView
+        android:id="@+id/resultTextView"
+        android:text="Results..."
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+</LinearLayout>
