@@ -28,18 +28,19 @@ public class Server {
             case "Echo":
                 response = getSystemInfo();
                 break;
+                
             case "Restart":
                 response = hostname + " - Rebooting...";
-                // Runtime.getRuntime().exec("sudo shutdown -r now");  // Linux
-                //Runtime.getRuntime().exec("shutdown -r");
-                // Θα το τροποποιήσουμε να εκτέλει την εντόλη αναλόγος OS (Απο το response)
+                out.println(response);
+                out.flush();
                 break;
+
             case "Shutdown":
                 response = hostname + " - Shutting down...";
-                // Runtime.getRuntime().exec("sudo shutdown -h now"); // Linux
-                //Runtime.getRuntime().exec("shutdown /s");
-                // Θα το τροποποιήσουμε να εκτέλει την εντόλη αναλόγος OS (Απο το response)
+                out.println(response);
+                out.flush();
                 break;
+
             case "Restore":
                 response = hostname + " - Restoring";
                 out.println(response);
@@ -56,6 +57,8 @@ public class Server {
     public static void main(String[] args) {
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             System.out.println("Server listening on port " + PORT + "...");
+            System.out.println("Server IP: " + InetAddress.getLocalHost().getHostAddress());
+
             while (true) {
                 try (Socket clientSocket = serverSocket.accept();
                      BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
