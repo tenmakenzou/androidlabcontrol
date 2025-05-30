@@ -63,8 +63,7 @@ public class Server {
                 try (Socket clientSocket = serverSocket.accept();
                      BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                      PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true)) {
-                    
-                    System.out.println("Connected by " + clientSocket.getInetAddress()); // Θα το δοκιμασουμε μετα σε client.java
+            
                     String command = in.readLine().trim();
                     handleClientCommand(command, out);
                 }
