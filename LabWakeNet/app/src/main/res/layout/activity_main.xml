@@ -1,41 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:padding="16dp"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <Spinner
-        android:id="@+id/commands"
+    <LinearLayout
+        android:orientation="vertical"
+        android:padding="16dp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content">
 
-    <Spinner
-        android:id="@+id/pcs"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        <TextView
+            android:text="Select PCs:"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
 
-    <Button
-        android:id="@+id/sendButton"
-        android:text="Send Command"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        <ListView
+            android:id="@+id/pcsListView"
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:choiceMode="multipleChoice" />
 
-    <Button
-        android:id="@+id/wolButton"
-        android:text="Wake Up PC"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        <TextView
+            android:text="Select Command:"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" />
 
-    <Button
-        android:id="@+id/checkPcsButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="CheckPcs" />
+        <Spinner
+            android:id="@+id/commands"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
-    <TextView
-        android:id="@+id/resultTextView"
-        android:text="Results..."
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-</LinearLayout>
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:weightSum="3">
+
+            <Button
+                android:id="@+id/sendButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Send Command" />
+
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/wolButton"
+            android:layout_width="380dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="Send WOL" />
+
+        <Button
+            android:id="@+id/checkPcsButton"
+            android:layout_width="379dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="Check PCs" />
+
+        <TextView
+            android:id="@+id/resultTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:textIsSelectable="true"
+            android:textSize="14sp"
+            android:textColor="#000000"
+            android:padding="8dp"
+            android:background="#EEEEEE" />
+    </LinearLayout>
+</ScrollView>

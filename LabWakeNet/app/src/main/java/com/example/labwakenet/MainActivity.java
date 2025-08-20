@@ -3,24 +3,29 @@ package com.example.labwakenet;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.SparseBooleanArray;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
-    Spinner pcs;
+    ListView pcsListView;
     Spinner commands;
-    Button checkPcsButton;
-    Button sendButton, wolButton;
+    Button checkPcsButton, sendButton, wolButton;
     TextView resultTextView;
 
     String[] commandsArray = {"Echo", "Restart", "Shutdown", "Restore"};
     String[] pcsArray = new String[27];
     Map<String, String> pcIpMap = new HashMap<>();
+
+    // Thread pool (reused threads instead of creating new ones each click)
+    private final ExecutorService executor = Executors.newFixedThreadPool(4);
 
     @SuppressLint("DefaultLocale")
     @Override
@@ -28,77 +33,117 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Create PC list
+        // Build PC names (PC01 … PC27)
         for (int i = 0; i < pcsArray.length; i++) {
-            pcsArray[i] = String.format("RPC%02d", i + 1);
+            pcsArray[i] = String.format("PC%02d", i + 1);
         }
 
-        // εδω βαζουμε τις IP των υπολογιστων (δουλευει με την ip του ΥΠ μου)
-        pcIpMap.put("RPC01", "192.168.1.2");
-        pcIpMap.put("RPC02", "192.168.1.101");
-        pcIpMap.put("RPC03", "192.168.1.102");
+        // Build IP addresses automatically (192.168.1.2 … 192.168.1.28)
+        String[] ips = new String[27];
+        for (int i = 0; i < ips.length; i++) {
+            ips[i] = "192.168.1." + (i + 2);
+        }
 
+        // Map PCs to IPs
+        for (int i = 0; i < pcsArray.length; i++) {
+            pcIpMap.put(pcsArray[i], ips[i]);
+        }
+
+        pcsListView = findViewById(R.id.pcsListView);
         commands = findViewById(R.id.commands);
-        pcs = findViewById(R.id.pcs);
         sendButton = findViewById(R.id.sendButton);
         wolButton = findViewById(R.id.wolButton);
         checkPcsButton = findViewById(R.id.checkPcsButton);
         resultTextView = findViewById(R.id.resultTextView);
 
-        ArrayAdapter<String> adapterCommands = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, commandsArray);
-        commands.setAdapter(adapterCommands);
+        ArrayAdapter<String> pcsAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_list_item_multiple_choice, pcsArray);
+        pcsListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+        pcsListView.setAdapter(pcsAdapter);
 
-        ArrayAdapter<String> adapterPcs = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, pcsArray);
-        pcs.setAdapter(adapterPcs);
-
-        checkPcsButton.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, CheckPcsActivity.class);
-            startActivity(intent);
-        });
+        commands.setAdapter(new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item, commandsArray));
 
         sendButton.setOnClickListener(v -> sendCommand());
         wolButton.setOnClickListener(v -> sendWOL());
+        checkPcsButton.setOnClickListener(v ->
+                startActivity(new Intent(this, CheckPcsActivity.class)));
     }
 
     @SuppressLint("SetTextI18n")
     private void sendCommand() {
+        SparseBooleanArray checked = pcsListView.getCheckedItemPositions();
         String command = commands.getSelectedItem().toString();
-        String target = pcs.getSelectedItem().toString();
+        resultTextView.setText("");
 
-        String ip = pcIpMap.get(target);
-        if (ip == null) {
-            resultTextView.setText("Error: Unknown PC selected (" + target + ")");
+        if (checked.size() == 0) {
+            resultTextView.setText("Please select at least one PC.");
             return;
         }
 
-        //βοηθαει στο debug
-        new Thread(() -> {
-            try {
-                String result = TcpClient.sendCommand(ip, 41007, command);
-                runOnUiThread(() -> resultTextView.setText(result));
-            } catch (UnknownHostException e) {
-                runOnUiThread(() -> resultTextView.setText("Error: Unable to resolve host " + ip));
-            } catch (java.net.ConnectException e) {
-                runOnUiThread(() -> resultTextView.setText("Error: Unable to connect to " + ip + ":41007"));
-            } catch (java.net.SocketTimeoutException e) {
-                runOnUiThread(() -> resultTextView.setText("Error: Connection to " + ip + " timed out"));
-            } catch (Exception e) {
-                runOnUiThread(() -> resultTextView.setText("Unexpected Error: " + e.getMessage()));
+        for (int i = 0; i < pcsArray.length; i++) {
+            if (checked.get(i)) {
+                String target = pcsArray[i];
+                String ip = pcIpMap.get(target);
+
+                if (ip == null) {
+                    runOnUiThread(() -> resultTextView.append("\nUnknown PC: " + target));
+                    continue;
+                }
+
+                executor.execute(() -> {
+                    try {
+                        String result = TcpClient.sendCommand(ip, 41007, command);
+                        runOnUiThread(() -> resultTextView.append("\n[" + target + "] " + result));
+                    } catch (UnknownHostException e) {
+                        runOnUiThread(() -> resultTextView.append("\n[" + target + "] Host Error"));
+                    } catch (Exception e) {
+                        runOnUiThread(() -> resultTextView.append("\n[" + target + "] Error: " + e.getMessage()));
+                    }
+                });
             }
-        }).start();
+        }
     }
 
     @SuppressLint("SetTextI18n")
     private void sendWOL() {
-        String target = pcs.getSelectedItem().toString();
-        String macAddress = "00:11:22:33:44:55"; // βαζεις την mac του υπολογιστη
-        new Thread(() -> {
-            try {
-                WakeOnLan.sendWOL(macAddress, "255.255.255.255");
-                runOnUiThread(() -> resultTextView.setText("WOL sent to " + target));
-            } catch (Exception e) {
-                runOnUiThread(() -> resultTextView.setText("WOL Error: " + e.getMessage()));
+        Map<String, String> macMap = new HashMap<>() {{
+            put("PC01", "macaddress"); // example entry, extend this map with real MACs
+        }};
+
+        SparseBooleanArray checked = pcsListView.getCheckedItemPositions();
+        resultTextView.setText("");
+
+        if (checked.size() == 0) {
+            resultTextView.setText("Please select at least one PC.");
+            return;
+        }
+
+        for (int i = 0; i < pcsArray.length; i++) {
+            if (checked.get(i)) {
+                String target = pcsArray[i];
+                String macAddress = macMap.get(target);
+
+                if (macAddress == null) {
+                    runOnUiThread(() -> resultTextView.append("\n[" + target + "] MAC not found"));
+                    continue;
+                }
+
+                executor.execute(() -> {
+                    try {
+                        WakeOnLan.sendWOL(macAddress, "255.255.255.255");
+                        runOnUiThread(() -> resultTextView.append("\nWOL sent to " + target));
+                    } catch (Exception e) {
+                        runOnUiThread(() -> resultTextView.append("\nWOL Error on " + target + ": " + e.getMessage()));
+                    }
+                });
             }
-        }).start();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        executor.shutdown();
     }
 }

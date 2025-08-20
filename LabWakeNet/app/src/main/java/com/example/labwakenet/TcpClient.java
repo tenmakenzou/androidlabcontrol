@@ -1,4 +1,5 @@
 package com.example.labwakenet;
+
 import java.io.*;
 import java.net.*;
 
@@ -21,7 +22,10 @@ public class TcpClient {
             response.append(line).append("\n");
         }
 
+        writer.close();
+        reader.close();
         socket.close();
+
         return response.toString().trim();
     }
 }
